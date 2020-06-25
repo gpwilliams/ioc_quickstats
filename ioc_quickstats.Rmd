@@ -18,7 +18,11 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Getting Started in R
 
-We'll use the `tidyverse` package, which is a package of pacakges that simplify wrangling, summarising, and plotting data.
+If you have a local machine you can install programs on, you may want to install [R](https://www.r-project.org/) and [RStudio](https://rstudio.com/products/rstudio/download/), an IDE for working with R that makes many tasks easier to manage and has version control integration via Git. However, if you don't have a local machine, please make an account at [RStudio Cloud](https://rstudio.cloud/). This provides an online interface to RStudio that is managed by the makers of RStudio. If you have any issues with your local install, this is always a reliable option.
+
+Once installed, please download the content for this session from [GitHub](https://github.com/gpwilliams/ioc_quickstats). If you double click the `ioc_quickstats.Rproj` file and have RStudio installed, this will open up RStudio and set your file paths to be relative to the `ioc_quickstats` folder. This is important for ensuring that things like loading data happens without any problems. Generally, it's a good idea to have an RProject associated with any project you're carrying out for this reason: It makes collaboration easier. (To start a new project, in RStudio just use File --> New Project).
+
+R comes with a suite of pre-installed packages that provide functions for many common tasks. However, we'll download a popular package from CRAN, the comprehensive R Archive Network, which acts as a quality control for R packages. We'll use the `tidyverse` package, which is a package of pacakges that simplify wrangling, summarising, and plotting data. Run the following chunk to check if you have it already installed and to install it if not. Then be sure to load it on every new session.
 
 ```{r tidyverse, message = FALSE}
 if(!require(tidyverse)) {install.packages("tidyverse")} # optionally install it
@@ -40,7 +44,7 @@ set.seed(1000)
 
 # Philosophy of Science
 
-What do we want to know?
+What do we want to know from our data? Your philosophy of science dictates how you'll analyse and interpret your data, so having a background in common approaches is useful. Here, we'll cover two popular approaches to statistics. First, however, it's important to understand some basics of probability and sampling data.
 
 # Samples and Populations
 

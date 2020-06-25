@@ -1530,7 +1530,9 @@ div.tocify {
 
 <div id="getting-started-in-r" class="section level1">
 <h1><span class="header-section-number">1</span> Getting Started in R</h1>
-<p>We’ll use the <code>tidyverse</code> package, which is a package of pacakges that simplify wrangling, summarising, and plotting data.</p>
+<p>If you have a local machine you can install programs on, you may want to install <a href="https://www.r-project.org/">R</a> and <a href="https://rstudio.com/products/rstudio/download/">RStudio</a>, an IDE for working with R that makes many tasks easier to manage and has version control integration via Git. However, if you don’t have a local machine, please make an account at <a href="https://rstudio.cloud/">RStudio Cloud</a>. This provides an online interface to RStudio that is managed by the makers of RStudio. If you have any issues with your local install, this is always a reliable option.</p>
+<p>Once installed, please download the content for this session from <a href="https://github.com/gpwilliams/ioc_quickstats">GitHub</a>. If you double click the <code>ioc_quickstats.Rproj</code> file and have RStudio installed, this will open up RStudio and set your file paths to be relative to the <code>ioc_quickstats</code> folder. This is important for ensuring that things like loading data happens without any problems. Generally, it’s a good idea to have an RProject associated with any project you’re carrying out for this reason: It makes collaboration easier. (To start a new project, in RStudio just use File –&gt; New Project).</p>
+<p>R comes with a suite of pre-installed packages that provide functions for many common tasks. However, we’ll download a popular package from CRAN, the comprehensive R Archive Network, which acts as a quality control for R packages. We’ll use the <code>tidyverse</code> package, which is a package of pacakges that simplify wrangling, summarising, and plotting data. Run the following chunk to check if you have it already installed and to install it if not. Then be sure to load it on every new session.</p>
 <pre class="r"><code>if(!require(tidyverse)) {install.packages(&quot;tidyverse&quot;)} # optionally install it
 library(tidyverse) # load it; run this every session.</code></pre>
 <p>We’ll also use the <code>here</code> package. This makes working with file paths across different systems relatively easy (no more switching between <code>/</code> and <code>\</code>).</p>
@@ -1541,7 +1543,7 @@ library(here) # load it; run this every session.</code></pre>
 </div>
 <div id="philosophy-of-science" class="section level1">
 <h1><span class="header-section-number">2</span> Philosophy of Science</h1>
-<p>What do we want to know?</p>
+<p>What do we want to know from our data? Your philosophy of science dictates how you’ll analyse and interpret your data, so having a background in common approaches is useful. Here, we’ll cover two popular approaches to statistics. First, however, it’s important to understand some basics of probability and sampling data.</p>
 </div>
 <div id="samples-and-populations" class="section level1">
 <h1><span class="header-section-number">3</span> Samples and Populations</h1>
