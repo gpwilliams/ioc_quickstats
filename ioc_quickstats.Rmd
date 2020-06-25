@@ -216,7 +216,9 @@ Notice how the mean is substantially affected by the presence of 2 large outlier
 
 ### Load Simulated Data
 
-We simulated some data in R looking at how heights of basketball and football players can be predicted by their weight and the sport they play. For full details on the simulation, please see the attached .Rmd file.
+We simulated some data in R looking at how heights of basketball and football players can be predicted by their weight and the sport they play. For full details on the simulation, please see the attached .Rmd file. 
+
+If you're viewing this online and want to follow along without downloading the files from [GitHub](https://github.com/gpwilliams/ioc_quickstats), please [click here](https://glennwilliams.me/ioc_quickstats/simulate-data.html).
 
 ```{r load-sports-data}
 sports_dat <- read_csv(here("data", "sports_dat.csv"))
@@ -416,13 +418,9 @@ First, we can simulate some data imagining exponential growth in some outcome. W
 
 ```{r exponential}
 # make a parabola with some random noise
-x <- seq(1, 200)
-y <- x^2 + 6 + rnorm(200, 0, 100)
-
-# put it together in a censored fashion
 dodgy_timecourse_exponential <- tibble(
-  time = seq(1, 200, 1),
-  number = y
+  time = seq(1, 200),
+  number = time^2 + 6 + rnorm(200, 0, 100)
 )
 ```
 
@@ -444,24 +442,24 @@ Let's make another example by building a parabola. Again, the similar limitation
 
 ```{r polynomial}
 # make a parabola with some random noise
-x <- seq(-100, 100)
-y <- -0.25*x^2 + 6 + rnorm(200, 0, 50)
+x <- seq(from = -100, to = 100)
+y <- -0.25*x^2 + 6 + rnorm(n = length(x), mean = 0, sd = 50)
 
 # put it together in a censored fashion
-dodgy_timecourse <- tibble(
-  time = seq(1, 110, 1),
+dodgy_timecourse_polynomial <- tibble(
+  time = seq(from = 1, to = 110),
   number = y[1:110]
 )
 
 # scale observations to be strictly positive
-dodgy_timecourse$number  <- 
-  dodgy_timecourse$number - min(dodgy_timecourse$number)
+dodgy_timecourse_polynomial$number  <- 
+  dodgy_timecourse_polynomial$number - min(dodgy_timecourse_polynomial$number)
 ```
 
 Now, we can fit the data using a polynomial function of time + the time squared. This allows a curve in the linear model. But, look what the model does beyond the data we have. Crucially, in real world examples where we know the data can't go below 0, this would be a bad model.
 
 ```{r polynomial-predictions, warning = FALSE}
-ggplot(dodgy_timecourse, mapping = aes(x = time, y = number)) +
+ggplot(dodgy_timecourse_polynomial, mapping = aes(x = time, y = number)) +
   geom_point() +
   geom_smooth(formula = y ~ poly(x, 2), method = "lm", fullrange = TRUE) +
   scale_x_continuous(limits = c(0, 300), breaks = c(0, 300)) +

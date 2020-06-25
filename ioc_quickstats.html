@@ -1684,6 +1684,7 @@ comparing_central # print output</code></pre>
 <div id="load-simulated-data" class="section level3">
 <h3><span class="header-section-number">7.3.1</span> Load Simulated Data</h3>
 <p>We simulated some data in R looking at how heights of basketball and football players can be predicted by their weight and the sport they play. For full details on the simulation, please see the attached .Rmd file.</p>
+<p>If you’re viewing this online and want to follow along without downloading the files from <a href="https://github.com/gpwilliams/ioc_quickstats">GitHub</a>, please <a href="https://glennwilliams.me/ioc_quickstats/simulate-data.html">click here</a>.</p>
 <pre class="r"><code>sports_dat &lt;- read_csv(here(&quot;data&quot;, &quot;sports_dat.csv&quot;))</code></pre>
 <pre><code>## Parsed with column specification:
 ## cols(
@@ -1886,13 +1887,9 @@ summary(hwp_mod)</code></pre>
 <p>We can fit our data assuming not a Gaussian distribution, but an Exponential distribution. This works well when we predict a massive uptick in growth. The number of infections in a pandemic as time goes on seems to fit this nicely on a local scale. However, the exponential will keep growing. It’s both powerful in the range of data that you have, but it can predict out of sample very poorly.</p>
 <p>First, we can simulate some data imagining exponential growth in some outcome. We’ll make an example by building a parabola. This is maybe not the best example as the model actually accurately fits the data generation process, but with censored data, it at least follows a local exponential trend similar to the real world example above.</p>
 <pre class="r"><code># make a parabola with some random noise
-x &lt;- seq(1, 200)
-y &lt;- x^2 + 6 + rnorm(200, 0, 100)
-
-# put it together in a censored fashion
 dodgy_timecourse_exponential &lt;- tibble(
-  time = seq(1, 200, 1),
-  number = y
+  time = seq(1, 200),
+  number = time^2 + 6 + rnorm(200, 0, 100)
 )</code></pre>
 <p>We can then plot this and see how the model behaves outside the observed data.</p>
 <pre class="r"><code>ggplot(dodgy_timecourse_exponential, mapping = aes(x = time, y = number)) +
@@ -1905,21 +1902,20 @@ dodgy_timecourse_exponential &lt;- tibble(
 <p>The same can be said from the use of polynomial functions in modelling growth in infections over time. Using not just a linear model, but orthogonal linear and quadratic polynomials can allow for curvature in the growth. However, again, these functions can go wrong out of sample. In this case, the model can predict negative infections in just a few days after a massive number of infections with the data we have.</p>
 <p>Let’s make another example by building a parabola. Again, the similar limitations on this simulation apply, but with censored data it follows a local polynomial similar to the real world example above.</p>
 <pre class="r"><code># make a parabola with some random noise
-x &lt;- seq(-100, 100)
-y &lt;- -0.25*x^2 + 6 + rnorm(200, 0, 50)</code></pre>
-<pre><code>## Warning in -0.25 * x^2 + 6 + rnorm(200, 0, 50): longer object length is not a
-## multiple of shorter object length</code></pre>
-<pre class="r"><code># put it together in a censored fashion
-dodgy_timecourse &lt;- tibble(
-  time = seq(1, 110, 1),
+x &lt;- seq(from = -100, to = 100)
+y &lt;- -0.25*x^2 + 6 + rnorm(n = length(x), mean = 0, sd = 50)
+
+# put it together in a censored fashion
+dodgy_timecourse_polynomial &lt;- tibble(
+  time = seq(from = 1, to = 110),
   number = y[1:110]
 )
 
 # scale observations to be strictly positive
-dodgy_timecourse$number  &lt;- 
-  dodgy_timecourse$number - min(dodgy_timecourse$number)</code></pre>
+dodgy_timecourse_polynomial$number  &lt;- 
+  dodgy_timecourse_polynomial$number - min(dodgy_timecourse_polynomial$number)</code></pre>
 <p>Now, we can fit the data using a polynomial function of time + the time squared. This allows a curve in the linear model. But, look what the model does beyond the data we have. Crucially, in real world examples where we know the data can’t go below 0, this would be a bad model.</p>
-<pre class="r"><code>ggplot(dodgy_timecourse, mapping = aes(x = time, y = number)) +
+<pre class="r"><code>ggplot(dodgy_timecourse_polynomial, mapping = aes(x = time, y = number)) +
   geom_point() +
   geom_smooth(formula = y ~ poly(x, 2), method = &quot;lm&quot;, fullrange = TRUE) +
   scale_x_continuous(limits = c(0, 300), breaks = c(0, 300)) +
