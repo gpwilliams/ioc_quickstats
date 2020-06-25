@@ -152,7 +152,6 @@ ggplot(mapping = aes(positions)) +
 
 Why is this captured well by the normal distribution? There are **many more ways to realise a position of 0** from combining left-right steps than there are extreme values (e.g. all right steps).
 
-# Probability Distributions
 ## The Exponentials
 
 There are of course many other ways that data can be generated, but we commonly rely on the exponential family. Which one you choose to model your data with depends on domain expertise and knowledge of the underlying data generation process. 
@@ -161,13 +160,15 @@ e.g. if modelling something with a binomial response (i.e. 1s or 0s), a binomial
 
 Your choice matters, because if you model data with the wrong distribution you might get nonsensical model outputs. For example, modelling a probabilities (bounded between 0 and 1) with a Gaussian distribution could give probabilities below 0 or above 1, which is impossible.
 
-```{r exponentials, fig.cap = "Some of the exponential family distributions, their notation in R, and some of their relationships. Centre: exponential. Clockwise, from top-left: gamma, normal (Gaussian), binomial, and Poisson distributiojns. Image and caption taken from McElreath (2016), Statistical Rethinking."}
+```{r exponentials, fig.cap = "Some of the exponential family distributions, their notation in R, and some of their relationships. Centre: exponential. Clockwise, from top-left: gamma, normal (Gaussian), binomial, and Poisson distributiojns. Image and caption taken from McElreath (2016), Statistical Rethinking.", echo = FALSE}
 knitr::include_graphics(
   here("img", "mcelreath-2016_exponentials.png")
 )
 ```
 
 We will approach modelling our data assuming a Gaussian distribution here. This is what the **general linear model** -- a very flexible family of models in statistics -- assumes. However, we can choose to fit our data under a different assumption for the data generating process by using different distributions. In R, it is also common to fit data using a **logistic regression** which models data from a binomial process. Typically, these different distributions come under the family of a **generalised linear model** and apply **link functions** to our data.
+
+If you want to learn more about this or love the figure (or probability, or statistics in general), please check out [Statistical Rethinking by Richard McElreath](https://xcelab.net/rm/statistical-rethinking/).
 
 # Descriptive Statistics
 
@@ -485,3 +486,5 @@ What are some assumptions of the general linear model?
 # Further Reading
 
 - [R4Pysch: A 10 lesson course and 10 chapter book on using R for research from the perspective of a psychologist](https://glennwilliams.me/r4psych/). This is appropriate for any applied for social science.
+
+- [Statistical Rethinking by Richard McElreath](https://xcelab.net/rm/statistical-rethinking/).
