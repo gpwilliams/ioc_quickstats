@@ -1,0 +1,100 @@
+---
+title: "simulate-heights"
+author: "Glenn Williams"
+date: "25/06/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load-pacakges}
+if(!require(tidyverse)){install.packages("tidyverse")}
+if(!require(here)){install.packages("here")}
+library(tidyverse)
+library(here)
+```
+
+# Simulate Data
+
+Now, we'll simulate some data for us to use in the main content of the course. To do so, we'll use a little bit of linear algebra.
+
+To make a square table of data, we can use R's built n `data.frame()` or `tibble()` from the `tibble` library (built into the `tidyverse`). This is just a stricter `data.frame` where data retains the notion it is part of a table of data on subsetting and explicitly states the data types on printing. Largely though, you won't notice the difference.
+
+we first assume that we have 200 samples of data in total. We then create a table of data whereby we have 100 basketball players and 100 football players using R's default `rep()` command. We then also create a numerical variable indicating the sport played by an individual. This will be useful for our linear algebra later and should make more sense then. Here, we assign basketball players the ID number 1, and football players the ID number 0. Finally, we define the weights of the basketball players as being drawn from a random, normal (or Gaussian) distribution with a mean of 100 and a standard deviation of 10. These values are in kilograms, so we know that the average weight of a basketball player in this simulation is 100 and 95% of scores fall within the range of 80-120kg. (Remember, that 2*SD is where 95% of scores fall in a normal distribution.)
+
+```{r simulate-weight-and-sport}
+N <- 200 # number of samples
+
+# define weight for each sport by random draws from a normal distribution
+# with different mean weights
+sports_dat <- tibble(
+  sport = c(
+    rep("basketball", times = N/2), 
+    rep("football", times = N/2)
+  ),
+  sport_num = c(
+    rep(1, times = N/2),
+    rep(0, times = N/2)
+  ),
+  weight = c(
+    rnorm(n = N/2, mean = 100, sd = 10), 
+    rnorm(n = N/2, mean = 80, sd = 10)
+  )
+)
+```
+
+Now we have our data with an index for sport and the average weights of the players. However, how do we determine their heights? Let's make a few assumptions: (i) Basketball players on average are taller than football players; (ii) as your weight increases your height will generally increase; and (iii) football players have a steeper increase in height with their weight than basketball players. (This latter assumption comes from a guess basketball players tend to need to be tall, so there'll be less variability in their height by weight, while football players can be big and strong [e.g. centre backs] or small and light [e.g. wingers/number 10s]; this may not actually be true.)
+
+So, our model of how height is related to weight and sport can be determined by two main effects (weight, sport) and the interaction between them (how do sport and weight covary to impact height). This can be determined by the following linear model:
+
+$y = \alpha + \beta_w*weight + \beta_s*sport + \beta_{ws}*weight*sport + e$
+
+Where the outcome, y (height), is determined by a baseline height for footballers (alpha), and increases by a certain unit increase for each unit of weight, a certain unit increase by sport, and a certain unit increase by sport and weight. Finally, we have some random error attached to this for unaccounted variability in height between individuals.
+
+Alternatively, we can use a more flexible notation, as in McElreath (2016):
+
+$y \sim Normal(\mu, \sigma)$
+
+and mu (the mean) and sigma (the random error) are defined as:
+
+$\mu = alpha + \beta_w*weight + \beta_s*sport + \beta_{ws}*weight*sport$
+$\sigma = x$
+
+where x is any value we define. Typically, we might make this also drawn from a random distribution, but here we will set it to a fixed value. Below, we will set the parameters as follows:
+
+- The baseline height (in cm) for footballers is 170cm.
+- The beta for sport is 15. Because we multiply this by our numerical ID of sport, only basketball players (1) have their baseline height increased by 15 while football players do not (0); i.e. 15 * 1 vs. 15 * 0.
+- The beta for weight is 0.3. That is, height increases by 0.3cm (or 3mm) for each kg increase in weight.
+- The beta for weight by sport is -0.1. So for basketball players their increase in height by weight is weaker than that for football players; i.e. for basketball the ID is still 1, so 1 * 0.3 * -0.1 = - 0.03. While football players remain unaffected by this negative interaction, i.e. 0 * 0.3 * -0.1 = 0.
+- Sigma, the random variability of height is 3. This means 95% of scores vary around the mean value for our combination of variables by $\pm$ 6cm.
+
+```{r define-parameters-for-simulation}
+alpha <- 170 # baseline height in cm for footballers
+beta_sport <- 15 # increase over baseline height for basketballers
+beta_weight <- 0.3  # unit increase in height for each kg in weight
+beta_weight_sport <- -0.1 # interaction: unit increase in height by weight and sport
+sigma <- 3 # random error around estimates
+```
+
+Finally, we'll put this all together to generate our heights as a function of weight, sport, and their interaction:
+
+```{r determine-height-parameters}
+# linear model for mean height
+mu <- alpha + 
+  beta_weight*sports_dat$weight +
+  beta_sport*sports_dat$sport_num +
+  beta_weight_sport * sports_dat$weight * sports_dat$sport_num
+
+# randomly drawing from mean height with added variability for each individual.
+sports_dat$height <- rnorm(n = N, mean = mu, sd = sigma)
+```
+
+Typically, it's a good idea to inspect a plot of your simualted data to determine if your parameters interact to make sensible values, but I've already done that. We'll also inspect a plot of this data in the main course content, so I'll leave that out here.
+
+Finally, we want to save our data to an external .csv file. We can do this as follows:
+
+```{r write-to-file}
+write_csv(sports_dat, path = here("data", "sports_dat.csv"))
+```

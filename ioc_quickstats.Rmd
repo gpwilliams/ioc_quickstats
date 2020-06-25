@@ -1,0 +1,485 @@
+---
+title: "ioc_quickstats"
+author: "Dr Glenn Williams"
+date: "17/06/2020"
+output:
+  html_document:
+    theme: united
+    hightlight: tango
+    toc: true
+    toc_float:
+      collapsed: false
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Getting Started in R
+
+We'll use the `tidyverse` package, which is a package of pacakges that simplify wrangling, summarising, and plotting data.
+
+```{r tidyverse, message = FALSE}
+if(!require(tidyverse)) {install.packages("tidyverse")} # optionally install it
+library(tidyverse) # load it; run this every session.
+```
+
+We'll also use the `here` package. This makes working with file paths across different systems relatively easy (no more switching between `/` and `\`).
+
+```{r here, message = FALSE}
+if(!require(here)) {install.packages("here")} # optionally install it
+library(here) # load it; run this every session.
+```
+
+Finally, for reproducibility, we'll set a seed for our random number generation. Why? This just allows you to get the same numbers as me when we simulate "random" data.
+
+```{r}
+set.seed(1000)
+```
+
+# Philosophy of Science
+
+What do we want to know?
+
+# Samples and Populations
+
+If we have the whole population, we don't need inferential statistics.
+
+- These are used only when we want to draw inferences about the population based on our sample.
+
+- e.g. Are basketball players in your local club taller than football players in your local club? Just measure them, there aren't that many people in the clubs and the data are easily accessible.
+
+- e.g. Are basketball players in the population generally taller than football players? Get a representative sample of basketball and football players from the population, measure their heights, then use inferential statistics to come to a conclusion. 
+
+We use the sample to draw inferences about the entire population. How we do so depends on our definition of probability or the types of questions we'd like to answer.
+
+# Probability and Inference in Many Flavours
+
+There are many approaches to statistical inference. Two of the most commonly used approaches are Neyman-Pearson frequentist statistics (often using null-hypothesis significance testing), and Bayesian inference (often using estimation or model comparison approaches).
+
+## Frequentist Statistics:
+
+  - Approaches probability from an "objective" standpoint. 
+  - Probability refers to the likelihood of an event vs. a collection of events.
+  - Concerned with **long-run error control**.
+
+e.g. Get 7 heads out of 10 coin flips. Is the coin fair? Assume it is, i.e. P(heads) = 0.5, and estimate how often you would get 7 heads in 10 flips across an infinite set of flips. If very rare under a pre-defined cutoff (e.g. 5%), we reject the hypothesis that the coin is fair.
+
+Using this approach, we will only make an incorrect decision (e.g. false rejection, false acceptance of hypothesis) at a known and controlled rate.
+
+## Bayesian Statistics:
+
+  - Approaches probability from a "subjective" standpoint.
+  - Probability refers to the degree of belief in a hypothesis.
+  - Concerned with **maximal use of available data** to understand how beliefs should change.
+
+e.g. A coin get 7 heads out of 10 flips. Which probabilities of getting heads are most plausible (e.g. 0.6, 0.7, 0.8)? We can estimate this for a range of probabilities or to a degree of credibility (i.e. I'm 90% certain it is between 0.6 and 0.8).
+
+Using this approach we often get the closest estimates of the true probabilities. We can also incorporate our beliefs about the data in the model. This is useful when data are hard or expensive to get.
+
+# Probability Distributions
+## The Gaussian Distribution
+
+If we aim to describe our sample and draw inferences from it that apply to a population, we often need to make an assumption about the **sampling distribution** of the data.
+
+Many "standard" approaches to statistical inference assume data are drawn from a Gaussian/normal distribution. Why? 
+
+- Many processes that arise in nature tend towards a Gaussian distribution, so it tends to be a good fit.
+- When we are ignorant as to how the data arise, the Gaussian is a conservative choice. Is has maximum entropy.
+
+Imagine lining up at the centre line of a football field. Flip a coin 20 times. Every time it lands heads, step left. Every time it lands tails, step right. The distance of the step taken is allowed to vary between -1 and 1 yard.
+
+We'll demonstrate this using a few inbuilt functions in R: `replicate()` which repeats a process a set number of times (here 1000); `runif()` which draws data from a random, uniform distribution, giving n draws set between certain minimum and maximum values (here -1 and 1 yard). Finally, we sum their values together using `sum()` and assign the 1000 summed steps to a variable called `positions`.
+
+```{r simulate-coin-flips-and-steps}
+# get 1000 people, sum up their 20 flips of heads or tails
+positions <- replicate(1000, sum(runif(n = 20, min = -1, max = 1)))
+```
+
+I've plotted the density of the data at each distance from the middle line (0) against the normal distribution below.
+
+```{r plot-normal-distribution, echo = FALSE, fig.cap = "Plot of the final distance to the left or right of the centre line of the football pitch given a sum of 20 steps in either direction of variable length from 1000 people. The red shaded region shows the density of values at each distance from the centre line. he dotted line represents the normal distribution from which we assume the data is generated."}
+# plot the positions and overlay a Gaussian distribution
+positions_sd <- sd(positions)
+
+ggplot(mapping = aes(positions)) + 
+  stat_function(
+    fun = dnorm, 
+    args = list(mean = 0, sd = positions_sd), 
+    linetype = 2
+  ) +
+  geom_density(colour = "transparent", fill = "firebrick3", alpha = 0.5) +
+  labs(x = "Position", y = "Density") +
+  annotate(
+    geom = "curve", x = 5, y = 0.12, xend = 2.5, yend = 0.075, 
+    curvature = -.3, arrow = arrow(length = unit(2, "mm"))
+  ) +
+  annotate(
+    geom = "text", 
+    x = 5, 
+    y = 0.125, 
+    label = "Observed Density", 
+    hjust = "left"
+  ) +
+  annotate(
+    geom = "curve", 
+    x = -5, 
+    y = 0.135, 
+    xend = -1.35, 
+    yend = 0.14, 
+    curvature = .3, 
+    arrow = arrow(length = unit(2, "mm"))
+  ) +
+  annotate(
+    geom = "text", 
+    x = -7, 
+    y = 0.14, 
+    label = "Normal Distribution", 
+    hjust = "left"
+  ) +
+  scale_x_continuous(breaks = seq(from = -8, to = 8, by = 2)) +
+  theme_bw() +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major.y = element_blank()
+  )
+```
+
+Why is this captured well by the normal distribution? There are **many more ways to realise a position of 0** from combining left-right steps than there are extreme values (e.g. all right steps).
+
+# Probability Distributions
+## The Exponentials
+
+There are of course many other ways that data can be generated, but we commonly rely on the exponential family. Which one you choose to model your data with depends on domain expertise and knowledge of the underlying data generation process. 
+
+e.g. if modelling something with a binomial response (i.e. 1s or 0s), a binomial distribution will work best. 
+
+Your choice matters, because if you model data with the wrong distribution you might get nonsensical model outputs. For example, modelling a probabilities (bounded between 0 and 1) with a Gaussian distribution could give probabilities below 0 or above 1, which is impossible.
+
+```{r exponentials, fig.cap = "Some of the exponential family distributions, their notation in R, and some of their relationships. Centre: exponential. Clockwise, from top-left: gamma, normal (Gaussian), binomial, and Poisson distributiojns. Image and caption taken from McElreath (2016), Statistical Rethinking."}
+knitr::include_graphics(
+  here("img", "mcelreath-2016_exponentials.png")
+)
+```
+
+We will approach modelling our data assuming a Gaussian distribution here. This is what the **general linear model** -- a very flexible family of models in statistics -- assumes. However, we can choose to fit our data under a different assumption for the data generating process by using different distributions. In R, it is also common to fit data using a **logistic regression** which models data from a binomial process. Typically, these different distributions come under the family of a **generalised linear model** and apply **link functions** to our data.
+
+# Descriptive Statistics
+
+Now that we have a background in statistics and how we might model the data, let's look at how we'll get about doing so in R. First off, we need to describe the sample of data we have. 
+
+## Estimating Central Tendency: Means, Medians, IQR
+
+This description can be broken down into two measures; central tendency and dispersion. Central tendency represents the "average" of the data. Where abouts is the most common score?
+
+- **Mean**: Often used to describe data that are normally distributed. Can be misleading when outliers are present which drag the mean towards an unusually high or low value.
+
+- **Median**: Often used to describe data that are skewed in some way away from a normal distribution. This does a good job of suppressing effects of outliers on dragging scores in one direction.
+
+Let's see how they compare:
+
+```{r generate-values-central-tendency}
+normal_data <- rnorm(n = 20, mean = 10, sd = 1)
+outlier_data <- c(normal_data[1:18], 30, 55) # replace last 2 values with outliers
+
+# print values to see what they look like
+data.frame(normal = normal_data, outlier = outlier_data)
+```
+
+```{r comparing-measures-of-central-tendency}
+comparing_central <- data.frame(
+  normal_mean = mean(normal_data),
+  normal_median = median(normal_data),
+  outlier_mean = mean(outlier_data),
+  outlier_median = median(outlier_data)
+)
+
+comparing_central # print output
+```
+
+Notice how the mean is substantially affected by the presence of 2 large outliers, while the median stays much closer to most values.
+
+## Estimating Dispersion: Range, Variance, and Standard Deviation
+
+- **Standard Deviation**: A measure of the spread of the data from the sample mean. With a normal distribution approximately 1, 2, and 3 *SD*s capture approximately 68, 95, and 99.7% of the data. Use `sd()` in R.
+
+- **Standard Error**: A measure of the estimated of how far the sample mean is likely to be from the population mean. Use `sd(x)/sqrt(length(x))` assuming x is the outcome variable in R.
+
+- **Interquartile Range**: Often used when data are described by different distribution to the normal. Rank orders data into four equal parts. We get 3 values: the middle part of the first region -- or quartile -- (i.e. 25%), the median (i.e. 50%), and the middle part of the third quartile (i.e. 75%). Use `IQR()` in R.
+
+## Putting it Together
+
+### Load Simulated Data
+
+We simulated some data in R looking at how heights of basketball and football players can be predicted by their weight and the sport they play. For full details on the simulation, please see the attached .Rmd file.
+
+```{r load-sports-data}
+sports_dat <- read_csv(here("data", "sports_dat.csv"))
+```
+
+Nicely, we can see with `read_csv()` what the data types of our data look like. It's generally a good idea to inspect our data to get an idea of how it's laid out. The function `glimpse()` from the `tibble` pacakage in the `tidyverse` has a good method for getting this overview:
+
+```{r inspect-sports-dat}
+glimpse(sports_dat)
+```
+
+# A simple model of Height and Weight
+
+First off, we'll analyse our data just assuming that we only care about the relationship between height and weight. We are ignoring the sports variable for now just for simplicity.
+
+## Visualising Our Data
+
+Your first step to analysing your data should always be to plot it. This allows you to get a good overview of your data and to inspect any subtleties that may not be apparent in point summaries.
+
+`ggplot2` in the `tidyverse` provides a convenient way to visualise data using the [Grammar of Graphics](https://vita.had.co.nz/papers/layered-grammar.html). We essentially build up our plot from a series of layers of visual elements.
+
+This consists of a few parameters that must be defined:
+
+- **data**: what is name of the table from which to make your plot.
+- **mapping**: what data from the table will you plot, and how does it map onto the plot?
+- **aestheics**: these define how the data mapped onto the plot appear.
+
+With only these parameters we will get a blank background with our x and y variables on the axis labels. However, we won't have any data within the table. Why not? Because we need to explain how this data is presented and add it as a new layer. We do so using `geom_XXX()` where we can define different geoms (read: geometric objects) by replacing `XXX` with something like `point`, `bar`, or `boxplot` to get different types of plots.
+
+Here's a basic dotplot from the `sports_dat`:
+
+```{r ggplot-examples}
+ggplot(
+  data = sports_dat, 
+  mapping = aes(x = weight, y = height)
+  ) +
+  geom_point() + # dots
+  geom_smooth(formula = y ~ x, method = "lm")
+```
+
+We can change the axis labels, ticks, legend, and general aesthetics of the plot using different arguments (which we won't cover here). 
+
+However, the main message from this plot is that there seems to be a linear relationship between weight and height, such that as your weight increases, so too does your height (on average). Notice that we fitted a line of best fit to our observations using the `geom_smooth()` function. This take a formula using R's concise syntax and fits a linear model to the data (which we will get coeffients from later on). Nicely, it also contains a ribbon showing the 95% confidence interval around this estimate. This will be defined more properly later, but it essentially gives a measure of uncertainty in this estimate from the line of best fit.
+
+## Summarise the Data
+
+Our next step should be to describe the patterns within our data. We can do so using descriptiv statistics.
+
+Here, we take our data and use the pipe function `%>%` from `magrittr`, part of the `tidyverse`. This allows us to chain functions together. Here, we summarise the data by defining columns in the summary of the data defined by the means and *SD*s of the heights and weights. We use the function `n()` to count up the number of observations in each group.
+
+```{r dplyr-summarise}
+sports_dat %>% 
+  summarise(
+    mean_weight = mean(weight),
+    sd_weight = sd(weight),
+    mean_height = mean(height),
+    sd_height = sd(height),
+    n = n()
+  )
+```
+
+Notice that we use the mean here as we have no reason to assume that the data are skewed in some way, and the plot reveals that there are no outliers to further bias our estimates.
+
+*Optional*: With missing data, `n()` can misbehave. Often, it's better to take your outcome variable and calculate the number of observations with `length(unique(x))` where x is the label of your outcome variable. Additionally, `mean()` returns an NA if you have missing data. You can explictly ignore NAs in the calculation with `mean(x, na.rm = TRUE)` where again x is the label of your outcome variable.
+
+## Modelling Our Data using Inferential Statistics
+
+Here, we will focus on modelling our data using a **frequentist** approach. This is the most common approach to statistics in most of the social sciences, and is computationally easy to perform. Bayesian statistics requires some further overheads and is more computationally expensive, but in my opinion is often worth the effort.
+
+Now it's time to fit a simple model to our data. We want to know whether or not the trend in our sample will scale up to the general population (of **all** basketball and football players). Here, we assume that there is a linear relationship between height and weight, such that as weight increases, height increases by some constant value. We do this by using a formula structure that is like linar algebra. We estimate that height is predicted by weight as follows:
+
+In R: `y ~ x`, here `height ~ weight`
+
+In algebra: $y = \alpha + \beta_w*weight + e$, where we estimate height from:
+
+- an intercept ($\alpha$): y where x is 0, or the height where weight = 0.
+- a slope ($\beta_w$): how much y increases for each 1 unit increase in x, or how much height increases (in cm) for each 1 unit increase in weight (in kg).
+
+This way, we'll determine what the predicted height is when weight is 0 (quite nonsensical in this case) but how much height increases by in cm for each kg increase in weight.
+
+We fit this model using the `lm()` function in R and see the summary of model coefficients using `summary()`:
+
+```{r height-weight-model}
+hw_mod <- lm(height ~ weight, sports_dat)
+summary(hw_mod)
+```
+
+This model by default is fitted using a frequentist approach to modelling. This means that not only do we estimate what the true parameters are for the relationship between height and weight, but we also get test statistics such as the *t* and *p*-value. 
+
+The *t*-value assumes data are drawn from a *t* distribution rather than a normal distribution, which is a little more conservative with small samples (but converges to the normal with large samples). This just allows our estimates to be more accurate out of sample.
+
+We then get a measure of how much of the *t* distribution is above a cut-off for what is considered to be an uncommonly large effect if there were no relationship between our variables (i.e. where the estimate for the intercept or the slope of weight is 0). This is called the *p*-value. 
+
+Here, the *p*-value is very small (<.001) for the intercept and slope. This means that at a weight of 0kg, height is non-zero. This doesn't actually make much sense here. We can fix this by normalising our data, but we won't bother here as we're mainly interested in the slope, the linear increase in height by weight. This is also very small, meaning that if we assume there is no relationship between height and weight, the result we have would be very rare (i.e. its probability is <.001). 
+
+We can then confidently reject the null hypothesis that there is no relationship between height and weight (and by implication argue for support for our alternative hypothesis that there *is* a relationship). If we do this, we will only be wrong to reject this null hypothesis at a rate described by our cut-off for the *p*-value. Typically this is 0.05 in social science. 
+
+Notice though that we have no understanding of how accurate our alternaitve model is, i.e. that there is a linear relationship between height and weight. This is a subtle thing to think about, but with this method we only control our error rate in rejecting the null hypothesis (and other rates of error if we do further checks). We cannot say whether our alternative hypothesis is likely true. Indeed, it could be that we can reject the null hypothesis, but some other alternative hypothesis is at play that we didn't think about. For example, there could be a a linear and quadratic relationship between the variables.
+
+What can we conclude here? First, we have estimates of the parameters, i.e. the population values. We can work out the most likely heights given someone's weight. For example, what is the best estimate of height given a weight of 100kg?
+
+```{r}
+# access model coefficients
+intercept <- coef(summary(hw_mod))[1, 1] # row 1, column 1 of the coefficients
+slope <- coef(summary(hw_mod))[2, 1] # row 2, column 1 of the coefficients
+
+# height at 0kg + 100 units of increase in height for each kg of weight
+intercept + (slope * 100)
+```
+
+Check the plot above. This seems to correspond perfectly with the parameter estimate we just calculated. But lets return to the ribbon around the line. This is the 95% **confidence interval**. Essentially, this is an interval which is calculated such that 95% of all confidence intervals will contain the true parameter value. We can get this by using the `confint()` function on our model object in R.
+
+```{r confint}
+confint(hw_mod)
+```
+
+This gives you the lower and upper bounds of the confidence interval around the parameter estimate. For example, height may actually increase by weight by a factor of as low as `r round(confint(hw_mod)[2,1], 2)` or `r round(confint(hw_mod)[2,2], 2)` rather than the estimate of approximately `r slope` in the main model.
+
+So, now we have both **estimated parameters** and ran a **null hypothesis significance test** for the presence of an effect, i.e. that weight predicts height. We also know the uncertainty in our estimates.
+
+# Extending the Model: Using Categorical Predictors
+
+We know though that our sample is made up of both basketball players and football players. Maybe we should model that directly. 
+
+## Summarise the Data
+
+We can first summarise our data with the added grouping of sport by adding the `group_by()` command from `dplyr` to our summary code from above. This simply splits your data in two by the group you provide and gives a summary by each group.
+
+```{r dplyr-summarise-grouped}
+sports_dat %>% 
+  group_by(sport) %>% 
+  summarise(
+    mean_weight = mean(weight),
+    sd_weight = sd(weight),
+    mean_height = mean(height),
+    sd_height = sd(height),
+    n = n()
+  )
+```
+
+We can see that on average basketball players are both heavier and taller than football players in our sample. Let's plot this.
+
+## Plot the Data
+
+Here, we will add sport to the mapping of colour in our plot code. This acts to push this mapping down to the `geom_point()` and `geom_smooth()` aesthetics such that we have two coloured lines and points indicating the sport played by the people in the sample. We also get a legend along with this labelling the colours for us.
+
+```{r ggplot-examples-grouped}
+ggplot(
+  data = sports_dat, 
+  mapping = aes(x = weight, y = height, colour = sport)
+  ) +
+  geom_point() + # dots
+  geom_smooth(formula = y ~ x, method = "lm") # line of best fit# optional changes axis ticks and labels
+```
+
+`ggplot` picks default colours, labels, axes, ticks, legend placement and text etc for us but again we can readily change this using additional commands. However this is beyond the scope of this session. Next up, we should model our data. Let's add a categorical predictor to our model.
+
+## Model the Data
+
+We will use the same code as before, however our formula is now changed from `height ~ weight` (height is predicted by weight) to `height ~ weight * sport` indicating that height varies both by the weight and sport played by the individual. 
+
+Before we do this though, it's important to know how R handles modelling with character/factor predictors. R detects that you want to model your group as a factor with levels (i.e. sport with levels of basketball and football). As with our numerical predictor, R simply assigns a number to these levels. However, it can't read minds. So, by default, it assigns the value 0 to the label of the factor which comes first in the alphabet. **B**asketball comes before **f**ootball, so R gives these the values of 0 and 1 respectively. However, remember that in our data we have assigned basketball a 1 and football a 0. To keep our estimates as similar as possible to our prior model, we'll force R to give basketball the 1 and football the 0. 
+
+The impact of your coding can have important ramifications on what your parameter estimates represent. So, always be sure to check how your factors are coded and that you undertand fully what your parameter estimates mean. This is especially important when your factors have more than 2 levels or when you have mutliple categorical variables/factors.
+
+```{r set-contrasts}
+sports_dat$sport <- factor(sports_dat$sport) # force this variable to be a factor
+
+# get "treatment" contrasts for a 2 level variable and
+# make the second level (football) be the baseline parameter (base = 2)
+contrasts(sports_dat$sport) <- contr.treatment(2, base = 2)
+
+# inspect the factor contrasts to ensure it worked
+contrasts(sports_dat$sport)
+```
+
+We will then model our data as we described above. Our parameter estimates should have similar meanings as with the previous model.
+
+```{r height-weight-model-grouped}
+hwp_mod <- lm(height ~ weight*sport, sports_dat)
+summary(hwp_mod)
+```
+
+Now, we have an estimate for the height at the baseline, i.e. for football players where weight is 0, which is `r coef(summary(hwp_mod))[1, 1]`. We also have an estimate of the overall increase in height by weight, which is `r coef(summary(hwp_mod))[2, 1]`. Followed by this, we see that as sport changes from football to basketball, height increases by `round(coef(summary(hwp_mod))[3, 1], 2)`cm. We also see that we have an interaction between weight and sport, such that the slope for weight decreases from `r coef(summary(hwp_mod))[2, 1]` by `r coef(summary(hwp_mod))[4, 1]` for basketball players. Their increase in height by weight isn't as steep as that for football players. 
+
+We also can see that all of these effects are **statistically significant** such that if these parameter estimates had true values of 0 in the population, our results would be very unlikely to arise due to chance.
+
+There are ways to explore interactions when, for example, we have multiple categorical predictors. One nice package to use for this is the `emmeans` package which allows for comparisons between different combinations of factors.
+
+# Modelling Assumptions Matter: Some Cautions
+
+You may have noticed some dodgy statistics going around (some of it by government bodies) during the Covid-19 crisis. In some cases, this comes down to making erroneous assumptions about how data are modelled. 
+
+We can fit our data assuming not a Gaussian distribution, but an Exponential distribution. This works well when we predict a massive uptick in growth. The number of infections in a pandemic as time goes on seems to fit this nicely on a local scale. However, the exponential will keep growing. It's both powerful in the range of data that you have, but it can predict out of sample very poorly.
+
+First, we can simulate some data imagining exponential growth in some outcome. We'll make an example by building a parabola. This is maybe not the best example as the model actually accurately fits the data generation process, but with censored data, it at least follows a local exponential trend similar to the real world example above.
+
+```{r exponential}
+# make a parabola with some random noise
+x <- seq(1, 200)
+y <- x^2 + 6 + rnorm(200, 0, 100)
+
+# put it together in a censored fashion
+dodgy_timecourse_exponential <- tibble(
+  time = seq(1, 200, 1),
+  number = y
+)
+```
+
+We can then plot this and see how the model behaves outside the observed data.
+
+```{r exponential-predictions, warning = FALSE}
+ggplot(dodgy_timecourse_exponential, mapping = aes(x = time, y = number)) +
+  geom_point() +
+  geom_smooth(formula = y ~ poly(x, 2), method = "lm", fullrange = TRUE) +
+  scale_x_continuous(limits = c(0, 300), breaks = c(0, 300)) +
+  scale_y_continuous(limits = c(0, 60000))
+```
+
+You can see here that the number of cases, according to our model, will never decrease. This y-axis scale could go on forever.
+
+The same can be said from the use of polynomial functions in modelling growth in infections over time. Using not just a linear model, but orthogonal linear and quadratic polynomials can allow for curvature in the growth. However, again, these functions can go wrong out of sample. In this case, the model can predict negative infections in just a few days after a massive number of infections with the data we have.
+
+Let's make another example by building a parabola. Again, the similar limitations on this simulation apply, but with censored data it follows a local polynomial similar to the real world example above.
+
+```{r polynomial}
+# make a parabola with some random noise
+x <- seq(-100, 100)
+y <- -0.25*x^2 + 6 + rnorm(200, 0, 50)
+
+# put it together in a censored fashion
+dodgy_timecourse <- tibble(
+  time = seq(1, 110, 1),
+  number = y[1:110]
+)
+
+# scale observations to be strictly positive
+dodgy_timecourse$number  <- 
+  dodgy_timecourse$number - min(dodgy_timecourse$number)
+```
+
+Now, we can fit the data using a polynomial function of time + the time squared. This allows a curve in the linear model. But, look what the model does beyond the data we have. Crucially, in real world examples where we know the data can't go below 0, this would be a bad model.
+
+```{r polynomial-predictions, warning = FALSE}
+ggplot(dodgy_timecourse, mapping = aes(x = time, y = number)) +
+  geom_point() +
+  geom_smooth(formula = y ~ poly(x, 2), method = "lm", fullrange = TRUE) +
+  scale_x_continuous(limits = c(0, 300), breaks = c(0, 300)) +
+  scale_y_continuous(limits = c(-1000, 3000))
+```
+
+Knowing the limits of your model and where they can go wrong requires some thought about what your model predicts. Even our linear model of height and weight predicts a tall person who weighs nothing! Using real world knowledge and domain expertise allows us to use these models well, while remaining skeptical to parts of it that might not make sense.
+
+# Assumptions and Implications
+
+What are some assumptions of the general linear model?
+
+- **Linear relationship**: your variables must be linearly related. Simply check the scale of the data here; Likert scales are likely inappropriate.
+
+- **No auto-correlation**: your observations for your dependent variable must not impact one-another. When using mean scores, this is generally always met. If plotting change over time, this is often violated.
+
+- **No perfect multicolinnearity**: variables shouldn't be perfectly related to one-another. For example, don't model both height in cm and feet in the same model. Check with correlations if unsure.
+
+- **Normality**: Your residuals must be normally distributed. Check this by plotting your residuals with a histogram or density plot.
+
+- **Homoscedasticity** (homogeneity of variance): your residuals are equal across the regression line. You shouldn't e.g. get much more variability in scores at certain parts of the line.
+
+# Further Reading
+
+- [R4Pysch: A 10 lesson course and 10 chapter book on using R for research from the perspective of a psychologist](https://glennwilliams.me/r4psych/). This is appropriate for any applied for social science.
