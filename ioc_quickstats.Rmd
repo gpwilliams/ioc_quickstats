@@ -1,7 +1,7 @@
 ---
-title: "ioc_quickstats"
+title: "IOC Introduction to Statistics with Examples in R"
 author: "Dr Glenn Williams"
-date: "17/06/2020"
+date: "25/06/2020"
 output:
   html_document:
     theme: united
@@ -38,7 +38,7 @@ library(here) # load it; run this every session.
 
 Finally, for reproducibility, we'll set a seed for our random number generation. Why? This just allows you to get the same numbers as me when we simulate "random" data.
 
-```{r}
+```{r set-seed}
 set.seed(1000)
 ```
 
@@ -87,7 +87,7 @@ Using this approach we often get the closest estimates of the true probabilities
 
 If we aim to describe our sample and draw inferences from it that apply to a population, we often need to make an assumption about the **sampling distribution** of the data.
 
-Many "standard" approaches to statistical inference assume data are drawn from a Gaussian/normal distribution. Why? 
+Many "standard" approaches to statistical inference assume data are drawn from a Gaussian/normal distribution. Why? Some explanations (and an example) are provided by Richard McElreath (2016):
 
 - Many processes that arise in nature tend towards a Gaussian distribution, so it tends to be a good fit.
 - When we are ignorant as to how the data arise, the Gaussian is a conservative choice. Is has maximum entropy.
@@ -174,7 +174,7 @@ If you want to learn more about this or love the figure (or probability, or stat
 
 Now that we have a background in statistics and how we might model the data, let's look at how we'll get about doing so in R. First off, we need to describe the sample of data we have. 
 
-## Estimating Central Tendency: Means, Medians, IQR
+## Estimating Central Tendency: Means and Medians
 
 This description can be broken down into two measures; central tendency and dispersion. Central tendency represents the "average" of the data. Where abouts is the most common score?
 
@@ -205,7 +205,7 @@ comparing_central # print output
 
 Notice how the mean is substantially affected by the presence of 2 large outliers, while the median stays much closer to most values.
 
-## Estimating Dispersion: Range, Variance, and Standard Deviation
+## Estimating Dispersion: Standard Deviation, Standard Error, and Interquartile Range
 
 - **Standard Deviation**: A measure of the spread of the data from the sample mean. With a normal distribution approximately 1, 2, and 3 *SD*s capture approximately 68, 95, and 99.7% of the data. Use `sd()` in R.
 
@@ -321,7 +321,7 @@ Notice though that we have no understanding of how accurate our alternaitve mode
 
 What can we conclude here? First, we have estimates of the parameters, i.e. the population values. We can work out the most likely heights given someone's weight. For example, what is the best estimate of height given a weight of 100kg?
 
-```{r}
+```{r estimate-height-from-weight-coefs}
 # access model coefficients
 intercept <- coef(summary(hw_mod))[1, 1] # row 1, column 1 of the coefficients
 slope <- coef(summary(hw_mod))[2, 1] # row 2, column 1 of the coefficients
@@ -344,9 +344,26 @@ So, now we have both **estimated parameters** and ran a **null hypothesis signif
 
 We know though that our sample is made up of both basketball players and football players. Maybe we should model that directly. 
 
+## Plot the Data
+
+Let's first look at how the data look grouped by sport. Here, we will add sport to the mapping of colour in our plot code. This acts to push this mapping down to the `geom_point()` and `geom_smooth()` aesthetics such that we have two coloured lines and points indicating the sport played by the people in the sample. We also get a legend along with this labelling the colours for us.
+
+```{r ggplot-examples-grouped}
+ggplot(
+  data = sports_dat, 
+  mapping = aes(x = weight, y = height, colour = sport)
+  ) +
+  geom_point() + # dots
+  geom_smooth(formula = y ~ x, method = "lm") # line of best fit# optional changes axis ticks and labels
+```
+
+`ggplot` picks default colours, labels, axes, ticks, legend placement and text etc for us but again we can readily change this using additional commands. However this is beyond the scope of this session. 
+
+Our takeaway message from this plot should be that as weight increases so does height, but people who play basketball on average have a baseline of higher heights and weights than those who play football. Additionally, the rate of increase in height by weight within groups might differ.
+
 ## Summarise the Data
 
-We can first summarise our data with the added grouping of sport by adding the `group_by()` command from `dplyr` to our summary code from above. This simply splits your data in two by the group you provide and gives a summary by each group.
+We can next summarise our data with the added grouping of sport by adding the `group_by()` command from `dplyr` to our summary code from above. This simply splits your data in two by the group you provide and gives a summary by each group.
 
 ```{r dplyr-summarise-grouped}
 sports_dat %>% 
@@ -360,22 +377,7 @@ sports_dat %>%
   )
 ```
 
-We can see that on average basketball players are both heavier and taller than football players in our sample. Let's plot this.
-
-## Plot the Data
-
-Here, we will add sport to the mapping of colour in our plot code. This acts to push this mapping down to the `geom_point()` and `geom_smooth()` aesthetics such that we have two coloured lines and points indicating the sport played by the people in the sample. We also get a legend along with this labelling the colours for us.
-
-```{r ggplot-examples-grouped}
-ggplot(
-  data = sports_dat, 
-  mapping = aes(x = weight, y = height, colour = sport)
-  ) +
-  geom_point() + # dots
-  geom_smooth(formula = y ~ x, method = "lm") # line of best fit# optional changes axis ticks and labels
-```
-
-`ggplot` picks default colours, labels, axes, ticks, legend placement and text etc for us but again we can readily change this using additional commands. However this is beyond the scope of this session. Next up, we should model our data. Let's add a categorical predictor to our model.
+We can see that on average basketball players are both heavier and taller than football players in our sample. This aligns well with what we can see in the plot. Next up, we should model our data. Let's add a categorical predictor to our model.
 
 ## Model the Data
 

@@ -1,5 +1,5 @@
 ---
-title: "simulate-heights"
+title: "Simulating Heights Using Linear Algebra"
 author: "Glenn Williams"
 date: "25/06/2020"
 output: html_document
@@ -9,7 +9,9 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r load-pacakges}
+We will use the `tidyverse` package for creating tibbles of data and writing it to a .csv (though this is overkill we'll be consistent with the course). We'll also use the `here` package to make working with file paths easier in an RProject.
+
+```{r load-pacakges, message = FALSE}
 if(!require(tidyverse)){install.packages("tidyverse")}
 if(!require(here)){install.packages("here")}
 library(tidyverse)
@@ -55,14 +57,20 @@ Where the outcome, y (height), is determined by a baseline height for footballer
 
 Alternatively, we can use a more flexible notation, as in McElreath (2016):
 
-$y \sim Normal(\mu, \sigma)$
+$$
+y \sim Normal(\mu, \sigma)
+$$
 
-and mu (the mean) and sigma (the random error) are defined as:
+Here, the outcome variable, y, is normally distributed with a mean ($\mu$) and a standard deviation ($\sigma$). The mean and standard deviation are then defined as:
 
-$\mu = alpha + \beta_w*weight + \beta_s*sport + \beta_{ws}*weight*sport$
-$\sigma = x$
+$$
+\begin{aligned}
+&\mu = alpha + \beta_w*weight + \beta_s*sport + \beta_{ws}*weight*sport \\
+&\sigma = x
+\end{aligned}
+$$
 
-where x is any value we define. Typically, we might make this also drawn from a random distribution, but here we will set it to a fixed value. Below, we will set the parameters as follows:
+where `x` is any value we define. Typically, we might make this also drawn randomly from a distribution, but here we will set it to a fixed value. Below, we will set the parameters as follows:
 
 - The baseline height (in cm) for footballers is 170cm.
 - The beta for sport is 15. Because we multiply this by our numerical ID of sport, only basketball players (1) have their baseline height increased by 15 while football players do not (0); i.e. 15 * 1 vs. 15 * 0.
@@ -98,3 +106,5 @@ Finally, we want to save our data to an external .csv file. We can do this as fo
 ```{r write-to-file}
 write_csv(sports_dat, path = here("data", "sports_dat.csv"))
 ```
+
+Note this file path is only likely to work if you're working out of the folder downloaded from [GitHub](https://github.com/gpwilliams/ioc_quickstats) and have started RStudio from the RProject. Otherwise, you will need a subfolder called `data` in your working directory.
