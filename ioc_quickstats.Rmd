@@ -490,3 +490,5 @@ What are some assumptions of the general linear model?
 - [R4Pysch: A 10 lesson course and 10 chapter book on using R for research from the perspective of a psychologist](https://glennwilliams.me/r4psych/). This is appropriate for any applied for social science.
 
 - [Statistical Rethinking by Richard McElreath](https://xcelab.net/rm/statistical-rethinking/).
+
+<div class="tocify-extend-page" data-unique="tocify-extend-page" style="height: 0;"></div>
